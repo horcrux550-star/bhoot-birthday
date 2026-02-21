@@ -180,12 +180,50 @@
       }, { once: true });
     });
 
-    // Music (one-tap anywhere starts it)
-    const audio = new Audio('music.mp3'); audio.loop = true; audio.preload = 'auto'; let started = false;
-    const tryPlay = async () => { if (started) return; try { await audio.play(); started = true; } catch {} };
-    document.addEventListener('pointerdown', tryPlay, { once: true });
-    document.addEventListener('keydown', tryPlay, { once: true });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) tryPlay(); });
+    // Music (mobile-safe unlock + play)
+const audio = document.createElement('audio');
+audio.src = 'music.mp3';
+audio.loop = true;
+audio.preload = 'auto';
+audio.playsInline = true;
+audio.setAttribute('playsinline', '');
+
+let unlocked = false;
+let started = false;
+
+async function unlockAndPlay() {
+  try {
+    if (!unlocked) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      unlocked = true;
+    }
+    if (!started) {
+      await audio.play();
+      started = true;
+    }
+  } catch (e) {
+    // will retry on next tap
+  }
+}
+
+const gift = document.getElementById('giftBox');
+const heart = document.getElementById('coverHeart');
+const openBtn = document.getElementById('openSecret');
+
+[gift, heart, openBtn].forEach(el => {
+  el?.addEventListener('touchstart', unlockAndPlay, { passive: true });
+  el?.addEventListener('pointerdown', unlockAndPlay);
+  el?.addEventListener('click', unlockAndPlay);
+});
+
+document.addEventListener('touchstart', unlockAndPlay, { once: true, passive: true });
+document.addEventListener('pointerdown', unlockAndPlay, { once: true });
+document.addEventListener('click', unlockAndPlay, { once: true });
 
     // Hearts on tap
     const pagesEl = document.getElementById('pages');
