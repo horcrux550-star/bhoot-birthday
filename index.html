@@ -180,12 +180,23 @@
       }, { once: true });
     });
 
-    // Music (one-tap anywhere starts it)
-    const audio = new Audio('music.mp3'); audio.loop = true; audio.preload = 'auto'; let started = false;
-    const tryPlay = async () => { if (started) return; try { await audio.play(); started = true; } catch {} };
-    document.addEventListener('pointerdown', tryPlay, { once: true });
-    document.addEventListener('keydown', tryPlay, { once: true });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) tryPlay(); });
+   // Music (start on gift tap - mobile safe)
+const audio = document.createElement('audio');
+audio.src = 'music.mp3';
+audio.loop = true;
+audio.preload = 'auto';
+audio.playsInline = true;
+audio.setAttribute('playsinline', '');
+
+const gift = document.getElementById('giftBox');
+
+function startMusic() {
+  audio.play().catch(() => {});
+}
+
+gift?.addEventListener('touchstart', startMusic, { passive: true });
+gift?.addEventListener('pointerdown', startMusic);
+gift?.addEventListener('click', startMusic);
 
     // Hearts on tap
     const pagesEl = document.getElementById('pages');
